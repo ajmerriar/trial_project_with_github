@@ -10,17 +10,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up SSH
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install SSH key
         run: |
-          mkdir -p ~/.ssh/
-          echo " ${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Copy Files to Azure VM
-        run: scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa index.html azureuser@20.116.54.11:/var/www/html/index.html
-        
-      - name: Restart Apache Server
-        run: ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@20.116.54.11 'sudo systemctl restart apache2'
+      - name: Copy index.html to Azure VM
+        run: |
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa index.html ${{ secrets.AZURE_VM_USERNAME }}@${{ secrets.AZURE_VM_IP }}:/var/www/html
+        env:
+          AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
+          AZURE_VM_IP: ${{ secrets.AZURE_VM_IP }}
 
+      - name: SSH into Azure VM and Deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.AZURE_VM_USERNAME }}@${{ secrets.AZURE_VM_IP }} "sudo mv /var/www/html/index.html /var/www/html/azure_index.html"
+        env:
+          AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
+          AZURE_VM_IP: ${{ secrets.AZURE_VM_IP }}
+
+      - name: Restart Web Server
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.AZURE_VM_USERNAME }}@${{ secrets.AZURE_VM_IP }} "sudo systemctl restart apache2"
+        env:
+          AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
+          AZURE_VM_IP: ${{ secrets.AZURE_VM_IP }}
+
+      - name: Cleanup SSH key
+        run: rm -f ~/.ssh/id_rsa
