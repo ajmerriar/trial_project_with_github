@@ -28,14 +28,7 @@ jobs:
           AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
           AZURE_VM_IP: ${{ secrets.AZURE_VM_IP }}
 
-      - name: SSH into Azure VM and Deploy
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.AZURE_VM_USERNAME }}@${{ secrets.AZURE_VM_IP }} "sudo mv /var/www/html/index.html /var/www/html/azure_index.html"
-        env:
-          AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
-          AZURE_VM_IP: ${{ secrets.AZURE_VM_IP }}
-
-      - name: Restart Web Server
+      - name: SSH into Azure VM and Restart Apache
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.AZURE_VM_USERNAME }}@${{ secrets.AZURE_VM_IP }} "sudo systemctl restart apache2"
         env:
