@@ -24,7 +24,7 @@ jobs:
 
       - name: Printing PWD
         run: |
-          cd .. & pwd & ls -l
+          pwd & ls -l
       - name: Copy index.html to Azure VM
         run: |
           scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa index.html ${{ secrets.AZURE_VM_USERNAME }}@${{ secrets.AZURE_VM_IP }}:/var/www/html
